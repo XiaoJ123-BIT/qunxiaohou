@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>群小猴｜群聊 AI 智能分析桌面应用</title>
+  <meta name="description" content="群小猴是群聊 AI 智能分析桌面应用，支持多群摘要、待办提取、日报生成、增量监控、Prompt 模板和 Markdown/长图导出。" />
+  <style>
+    :root {
+      --ink: #13161c;
+      --body: #343a45;
+      --muted: #6d7480;
+      --line: #e4e8ef;
+      --soft: #f4f7fb;
+      --panel: #ffffff;
+      --blue: #1478ff;
+      --green: #13865f;
+      --amber: #a06b13;
+      --rose: #b3483b;
+      --radius: 8px;
+      --shadow: 0 24px 70px rgba(16, 26, 43, 0.13);
+      --soft-shadow: 0 14px 34px rgba(16, 26, 43, 0.07);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--soft);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Microsoft YaHei", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .wrap {
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .nav {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 20;
+      padding: 14px 0;
+      pointer-events: none;
+    }
+
+    .nav-inner {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 10px 8px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.76);
+      backdrop-filter: blur(22px) saturate(130%);
+      -webkit-backdrop-filter: blur(22px) saturate(130%);
+      box-shadow: 0 18px 52px rgba(16, 26, 43, 0.12);
+      pointer-events: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      font-size: 15px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .brand img {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius);
+      box-shadow: 0 8px 20px rgba(20, 120, 255, 0.23);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+      color: var(--ink);
+    }
+
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      overflow: hidden;
+      padding: 112px 0 48px;
+      background: #edf2f8;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: -18px;
+      background: url("resources/qunxiaohou-client-window.png") center top / cover no-repeat;
+      filter: blur(9px) saturate(0.82);
+      opacity: 0.48;
+      transform: scale(1.04);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(244, 247, 251, 0.94) 0%, rgba(244, 247, 251, 0.76) 42%, rgba(244, 247, 251, 0.9) 100%);
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      min-height: calc(100svh - 160px);
+      display: grid;
+      grid-template-columns: minmax(360px, 0.78fr) minmax(0, 1.22fr);
+      gap: 30px;
+      align-items: center;
+    }
+
+    .hero-copy {
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(24px) saturate(130%);
+      -webkit-backdrop-filter: blur(24px) saturate(130%);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid rgba(20, 120, 255, 0.19);
+      border-radius: var(--radius);
+      color: var(--blue);
+      background: rgba(255, 255, 255, 0.62);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      margin-top: 18px;
+      max-width: 540px;
+      font-size: clamp(42px, 5.2vw, 72px);
+      line-height: 0.99;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    h1 span {
+      display: block;
+    }
+
+    .lead {
+      margin-top: 18px;
+      max-width: 510px;
+      color: #2d333c;
+      font-size: clamp(18px, 1.9vw, 23px);
+      line-height: 1.48;
+      font-weight: 780;
+    }
+
+    .desc {
+      margin-top: 12px;
+      max-width: 520px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.74;
+    }
+
+    .hero-actions {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 16px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .button.primary {
+      color: #fff;
+      background: var(--blue);
+      box-shadow: 0 13px 30px rgba(20, 120, 255, 0.22);
+    }
+
+    .button.secondary {
+      color: #252b34;
+      border-color: rgba(19, 22, 28, 0.12);
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .hero-points {
+      display: grid;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .point {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid rgba(19, 22, 28, 0.1);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .point b {
+      width: 34px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius);
+      color: #fff;
+      background: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .point span {
+      color: var(--body);
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 760;
+    }
+
+    .product-frame {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .frame-bar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 14px;
+      border-bottom: 1px solid rgba(19, 22, 28, 0.1);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .frame-bar span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .lights {
+      display: flex;
+      gap: 7px;
+    }
+
+    .lights i {
+      width: 10px;
+      height: 10px;
+      display: block;
+      border-radius: 50%;
+    }
+
+    .lights i:nth-child(1) {
+      background: #ff5f57;
+    }
+
+    .lights i:nth-child(2) {
+      background: #ffbd2e;
+    }
+
+    .lights i:nth-child(3) {
+      background: #28c840;
+    }
+
+    .product-image {
+      height: clamp(390px, 57vw, 660px);
+      background: url("resources/qunxiaohou-client-window.png") left top / cover no-repeat;
+    }
+
+    .metrics-band {
+      position: relative;
+      z-index: 1;
+      margin-top: -24px;
+      padding-bottom: 36px;
+    }
+
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .mini-metric {
+      min-height: 104px;
+      padding: 14px;
+      border-radius: var(--radius);
+      background: #f8fafd;
+    }
+
+    .mini-metric b {
+      display: block;
+      color: var(--blue);
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .mini-metric span {
+      display: block;
+      margin-top: 11px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .section {
+      padding: 44px 0;
+      background: var(--soft);
+    }
+
+    .section.alt {
+      background: #fff;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(260px, 0.5fr);
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .kicker {
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-top: 7px;
+      max-width: 760px;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.08;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.68;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .panel {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .problem-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .problem {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #f8fafd;
+    }
+
+    .problem h3 {
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .problem p {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .interface-panel {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .interface-shot {
+      min-height: 340px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: url("resources/qunxiaohou-client-window.png") left top / cover no-repeat;
+    }
+
+    .caption-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .caption {
+      min-height: 90px;
+      padding: 14px;
+      border-radius: var(--radius);
+      background: #f8fafd;
+    }
+
+    .caption b {
+      display: block;
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .caption span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .flow-step {
+      min-height: 154px;
+      padding: 17px;
+      border-right: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .flow-step:last-child {
+      border-right: 0;
+    }
+
+    .flow-step small {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 5px 8px;
+      border-radius: var(--radius);
+      color: var(--blue);
+      background: #edf5ff;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .flow-step h3 {
+      margin-top: 20px;
+      font-size: 19px;
+      font-weight: 950;
+    }
+
+    .flow-step p {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.58;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .feature {
+      min-height: 170px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .feature em {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 5px 9px;
+      border-radius: var(--radius);
+      color: #fff;
+      background: var(--ink);
+      font-style: normal;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .feature h3 {
+      margin-top: 18px;
+      font-size: 21px;
+      line-height: 1.2;
+      font-weight: 950;
+    }
+
+    .feature p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .validation {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .data-card {
+      min-height: 158px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .data-card b {
+      display: block;
+      font-size: 33px;
+      line-height: 1;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .data-card span {
+      display: block;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.56;
+    }
+
+    .data-card.blue {
+      color: var(--blue);
+    }
+
+    .data-card.green {
+      color: var(--green);
+    }
+
+    .data-card.amber {
+      color: var(--amber);
+    }
+
+    .data-card.rose {
+      color: var(--rose);
+    }
+
+    .scenario-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .scenario {
+      min-height: 150px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .scenario small {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .scenario h3 {
+      margin-top: 24px;
+      font-size: 21px;
+      font-weight: 950;
+    }
+
+    .scenario p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .closing {
+      padding: 52px 0 68px;
+      background: var(--soft);
+    }
+
+    .closing-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 0.88fr) minmax(280px, 0.42fr);
+      gap: 24px;
+      align-items: center;
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .closing-panel p {
+      margin-top: 12px;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .tech-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .tech-list span {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #f8fafd;
+      color: var(--body);
+      font-size: 12px;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    footer {
+      padding: 18px 0 28px;
+      background: var(--soft);
+    }
+
+    .footer-row {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1040px) {
+      .hero-grid,
+      .split,
+      .section-head,
+      .closing-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-grid {
+        align-items: start;
+      }
+
+      .product-image {
+        height: 430px;
+      }
+
+      .metrics-row,
+      .validation {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .flow,
+      .feature-grid,
+      .scenario-row {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-step {
+        min-height: 118px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .flow-step:last-child {
+        border-bottom: 0;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .wrap {
+        width: min(100% - 24px, 1160px);
+      }
+
+      .nav {
+        padding-top: 10px;
+      }
+
+      .nav-inner {
+        min-height: 50px;
+      }
+
+      .nav-links,
+      .nav-links a:not(:last-child) {
+        display: none;
+      }
+
+      .hero {
+        padding: 88px 0 28px;
+      }
+
+      .hero-grid {
+        min-height: auto;
+      }
+
+      .hero-copy {
+        padding: 18px;
+      }
+
+      h1 {
+        font-size: 35px;
+        line-height: 1.05;
+      }
+
+      .lead {
+        font-size: 16px;
+      }
+
+      .product-image {
+        height: 320px;
+        background-position: left top;
+      }
+
+      .frame-bar {
+        justify-content: flex-start;
+      }
+
+      .frame-bar span {
+        display: none;
+      }
+
+      .metrics-band {
+        margin-top: 0;
+        padding-bottom: 16px;
+      }
+
+      .metrics-row,
+      .validation,
+      .caption-grid,
+      .tech-list {
+        grid-template-columns: 1fr;
+      }
+
+      .section {
+        padding: 30px 0;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .interface-shot {
+        min-height: 260px;
+      }
+
+      .footer-row {
+        display: block;
+      }
+
+      .footer-row span {
+        display: block;
+        margin-top: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="群小猴">
+        <img src="resources/icon.png" alt="群小猴 Logo" />
+        <span>群小猴</span>
+      </a>
+      <nav class="nav-links" aria-label="页面导航">
+        <a href="#product">产品</a>
+        <a href="#flow">链路</a>
+        <a href="#features">能力</a>
+        <a href="#metrics">指标</a>
+        <a href="#scenarios">场景</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <article class="hero-copy">
+          <div class="eyebrow">群聊 AI 智能分析桌面应用</div>
+          <h1><span>从群聊里</span><span>直接拿到</span><span>可用结论</span></h1>
+          <p class="lead">让群聊信息不再淹没，让重要内容自动浮现。</p>
+          <p class="desc">群小猴面向高频群聊场景，把本地消息读取、增量监控、AI 分析和结果导出整合成桌面端工作台。</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#product">看产品界面</a>
+            <a class="button secondary" href="#metrics">看验证指标</a>
+          </div>
+          <div class="hero-points" aria-label="核心价值">
+            <div class="point">
+              <b>01</b>
+              <span>自动提取摘要、待办、风险事项和业务结论。</span>
+            </div>
+            <div class="point">
+              <b>02</b>
+              <span>按群维护独立时间戳游标，只处理新增消息。</span>
+            </div>
+            <div class="point">
+              <b>03</b>
+              <span>沉淀日报、会议纪要、客户跟进和项目复盘模板。</span>
+            </div>
+          </div>
+        </article>
+
+        <aside class="product-frame" aria-label="群小猴客户端截图">
+          <div class="frame-bar">
+            <div class="lights"><i></i><i></i><i></i></div>
+            <span>群析 · ChatLens</span>
+          </div>
+          <div class="product-image"></div>
+        </aside>
+      </div>
+    </section>
+
+    <div class="metrics-band">
+      <div class="wrap metrics-row" aria-label="核心指标">
+        <div class="mini-metric">
+          <b>DAU 50+</b>
+          <span>冷启动测试单日活跃用户</span>
+        </div>
+        <div class="mini-metric">
+          <b>45%+</b>
+          <span>安装到首次分析转化率</span>
+        </div>
+        <div class="mini-metric">
+          <b>30%+</b>
+          <span>分析结果导出转化率</span>
+        </div>
+        <div class="mini-metric">
+          <b>8%-15%</b>
+          <span>试用到付费 / 授权意向转化率</span>
+        </div>
+        <div class="mini-metric">
+          <b>5000+ 元</b>
+          <span>模拟 / 意向 GMV</span>
+        </div>
+      </div>
+    </div>
+
+    <section id="product" class="section">
+      <div class="wrap section-head">
+        <div>
+          <p class="kicker">PRODUCT VIEW</p>
+          <h2>围绕“看群、分析、复用、导出”搭建桌面端工作流。</h2>
+        </div>
+        <p>左侧是群聊与筛选入口，右侧沉淀分析记录和结构化输出，适合每天反复使用的工作台形态。</p>
+      </div>
+
+      <div class="wrap split">
+        <article class="panel">
+          <p class="kicker">WHY IT MATTERS</p>
+          <h2>解决群聊里的三个真实痛点。</h2>
+          <div class="problem-list">
+            <div class="problem">
+              <h3>信息过载</h3>
+              <p>群消息高频滚动，重点进展、客户诉求和风险提醒容易被刷掉。</p>
+            </div>
+            <div class="problem">
+              <h3>人工整理慢</h3>
+              <p>日报、会议纪要、项目复盘需要来回翻记录，整理成本高。</p>
+            </div>
+            <div class="problem">
+              <h3>AI 结果难复用</h3>
+              <p>没有模板和导出链路时，分析结果很难进入汇报、协作和复盘流程。</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel interface-panel">
+          <div class="interface-shot" aria-label="客户端界面局部"></div>
+          <div class="caption-grid">
+            <div class="caption">
+              <b>多群筛选</b>
+              <span>按群聊、时间范围定位分析对象。</span>
+            </div>
+            <div class="caption">
+              <b>结构化记录</b>
+              <span>保留分析历史，方便追溯和复用。</span>
+            </div>
+            <div class="caption">
+              <b>一键导出</b>
+              <span>输出 Markdown 或长图进入协作场景。</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="flow" class="section alt">
+      <div class="wrap section-head">
+        <div>
+          <p class="kicker">ANALYSIS FLOW</p>
+          <h2>从新增消息，到可交付分析结果。</h2>
+        </div>
+        <p>增量监控让系统只拉取新内容，减少重复处理和模型调用成本，也降低用户等待时间。</p>
+      </div>
+
+      <div class="wrap flow">
+        <article class="flow-step">
+          <small>01</small>
+          <h3>选择群聊</h3>
+          <p>读取本地会话，按群维护独立分析对象。</p>
+        </article>
+        <article class="flow-step">
+          <small>02</small>
+          <h3>设定范围</h3>
+          <p>支持时间段分析，也支持定时增量监控。</p>
+        </article>
+        <article class="flow-step">
+          <small>03</small>
+          <h3>套用模板</h3>
+          <p>用日报、纪要、跟进、复盘模板稳定输出结构。</p>
+        </article>
+        <article class="flow-step">
+          <small>04</small>
+          <h3>AI 分析</h3>
+          <p>生成摘要、待办、重点话题和业务结论。</p>
+        </article>
+        <article class="flow-step">
+          <small>05</small>
+          <h3>导出协作</h3>
+          <p>复制、Markdown、长图导出，直接进入汇报流。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="wrap section-head">
+        <div>
+          <p class="kicker">CAPABILITY MAP</p>
+          <h2>核心能力不铺太散，只围绕分析闭环展开。</h2>
+        </div>
+        <p>功能设计重点不是多做按钮，而是让用户从聊天记录到可用结论的路径更短。</p>
+      </div>
+
+      <div class="wrap feature-grid">
+        <article class="feature">
+          <em>摘要</em>
+          <h3>多群聊摘要</h3>
+          <p>按群、时间段和提示词模板生成结构化摘要，减少手动浏览。</p>
+        </article>
+        <article class="feature">
+          <em>待办</em>
+          <h3>事项提取</h3>
+          <p>识别负责人、事项、时间和下一步动作，降低遗漏风险。</p>
+        </article>
+        <article class="feature">
+          <em>监控</em>
+          <h3>增量定时监控</h3>
+          <p>按群维护 lastProcessedTime，仅拉取新增消息进行分析。</p>
+        </article>
+        <article class="feature">
+          <em>模板</em>
+          <h3>Prompt 模板管理</h3>
+          <p>沉淀日报、会议纪要、客户跟进、项目复盘等常用模板。</p>
+        </article>
+        <article class="feature">
+          <em>追问</em>
+          <h3>多轮追问</h3>
+          <p>基于已有分析继续追问，支持复杂问题追溯和补充判断。</p>
+        </article>
+        <article class="feature">
+          <em>导出</em>
+          <h3>Markdown / 长图导出</h3>
+          <p>把结果从工具内带到汇报、协作、存档和复盘场景。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="metrics" class="section alt">
+      <div class="wrap section-head">
+        <div>
+          <p class="kicker">VALIDATION</p>
+          <h2>用活跃、转化、成本和效率验证落地价值。</h2>
+        </div>
+        <p>适合冷启动阶段表达产品验证结果，指标口径围绕真实使用链路设置。</p>
+      </div>
+
+      <div class="wrap validation">
+        <div class="data-card blue">
+          <b>DAU 50+</b>
+          <span>冷启动测试应用单日活跃用户，验证群聊分析需求存在。</span>
+        </div>
+        <div class="data-card green">
+          <b>45%+</b>
+          <span>安装到首次分析转化率，说明首个核心动作路径较顺。</span>
+        </div>
+        <div class="data-card amber">
+          <b>5000+ 元</b>
+          <span>累计模拟 / 意向 GMV，用于验证授权付费空间。</span>
+        </div>
+        <div class="data-card rose">
+          <b>8%-15%</b>
+          <span>试用到付费 / 授权意向转化率，衡量商业化可行性。</span>
+        </div>
+        <div class="data-card">
+          <b>30%+</b>
+          <span>分析结果导出转化率，衡量结果是否能进入协作流程。</span>
+        </div>
+        <div class="data-card">
+          <b>85%+</b>
+          <span>待办事项人工抽检识别准确率，验证结构化输出质量。</span>
+        </div>
+        <div class="data-card">
+          <b>60%-80%</b>
+          <span>重复消息处理减少，来自按群增量游标机制。</span>
+        </div>
+        <div class="data-card">
+          <b>5-10 min</b>
+          <span>日报整理时间压缩至分钟级，降低人工整理成本。</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="scenarios" class="section">
+      <div class="wrap section-head">
+        <div>
+          <p class="kicker">SCENARIOS</p>
+          <h2>高频沟通、强协作、需要复盘的群聊都适合。</h2>
+        </div>
+        <p>从个人效率工具切入，向团队版授权和企业场景定制延展。</p>
+      </div>
+
+      <div class="wrap scenario-row">
+        <article class="scenario">
+          <small>Daily Report</small>
+          <h3>企业日报</h3>
+          <p>自动汇总今日重点、待办、风险事项和下一步安排。</p>
+        </article>
+        <article class="scenario">
+          <small>Customer Follow-up</small>
+          <h3>客户跟进</h3>
+          <p>提炼客户诉求、承诺事项、异议点和跟进动作。</p>
+        </article>
+        <article class="scenario">
+          <small>Project Review</small>
+          <h3>项目复盘</h3>
+          <p>按时间线梳理进展、阻塞、决策依据和责任分工。</p>
+        </article>
+        <article class="scenario">
+          <small>Finance Automation</small>
+          <h3>财务自动化</h3>
+          <p>延展到发票识别、验真、字段校验和人工复核节点。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="wrap closing-panel">
+        <div>
+          <p class="kicker">QUNXIAOHOU CHATLENS</p>
+          <h2>让群聊信息不再淹没，让重要内容自动浮现。</h2>
+          <p>群小猴把本地微信数据读取、AI 分析、增量监控和协作导出组合成桌面端工作台，让团队从聊天记录里直接拿到可用结论。</p>
+        </div>
+        <div class="tech-list" aria-label="技术栈">
+          <span>Electron</span>
+          <span>React</span>
+          <span>TypeScript</span>
+          <span>sql.js</span>
+          <span>OpenAI SDK</span>
+          <span>wechat-cli</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-row">
+      <span>群小猴｜群聊 AI 智能分析桌面应用</span>
+      <span>桌面端群聊分析工作台</span>
+    </div>
+  </footer>
+</body>
+</html>
